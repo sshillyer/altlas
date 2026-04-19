@@ -1,10 +1,14 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { mkdirSync } from 'fs';
-import { dirname } from 'path';
+import { mkdirSync, existsSync } from 'fs';
+import { dirname, resolve, isAbsolute } from 'path';
 import * as schema from './schema';
 
-const dbPath = process.env.DB_PATH ?? './data/altwatch.db';
+const rawDbPath = process.env.DB_PATH ?? './data/altwatch.db';
+// Resolve relative paths from the repo root (3 levels up from src/db/ or dist/db/)
+const dbPath = isAbsolute(rawDbPath)
+  ? rawDbPath
+  : resolve(__dirname, '../../../', rawDbPath);
 
 mkdirSync(dirname(dbPath), { recursive: true });
 
