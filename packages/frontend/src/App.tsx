@@ -3,6 +3,7 @@ import { useAppStore, type View } from './store/useAppStore';
 import { CharactersView } from './views/CharactersView';
 import { TrackerView } from './views/TrackerView';
 import { ProfilesView } from './views/ProfilesView';
+import { SettingsView } from './views/SettingsView';
 import { api } from './api/client';
 
 const NAV_TABS: { view: View; label: string }[] = [
@@ -13,14 +14,28 @@ const NAV_TABS: { view: View; label: string }[] = [
 ];
 
 export default function App() {
-  const { activeView, setActiveView, setActiveProfile, setProfiles } = useAppStore();
+  const { activeView, setActiveView, setActiveProfile, setProfiles, setBnetStatus } = useAppStore();
 
   useEffect(() => {
-    Promise.all([api.settings.get(), api.profiles.list()]).then(([settings, profileList]) => {
-      setProfiles(profileList);
-      setActiveProfile(settings['active_profile_id'] ?? null);
-    });
-  }, [setActiveProfile, setProfiles]);
+    // Handle OAuth callback redirect: ?bnetAuth=success|error
+    const params = new URLSearchParams(window.location.search);
+    const bnetAuth = params.get('bnetAuth');
+    if (bnetAuth) {
+      // Clear the query param without a page reload
+      const clean = window.location.pathname;
+      window.history.replaceState({}, '', clean);
+      // Navigate to settings so the user sees their connection status
+      setActiveView('settings');
+    }
+
+    Promise.all([api.settings.get(), api.profiles.list(), api.auth.status()]).then(
+      ([settings, profileList, authStatus]) => {
+        setProfiles(profileList);
+        setActiveProfile(settings['active_profile_id'] ?? null);
+        setBnetStatus(authStatus.available, authStatus.connected);
+      },
+    ).catch(console.error);
+  }, [setActiveProfile, setProfiles, setBnetStatus, setActiveView]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -47,7 +62,7 @@ export default function App() {
         {activeView === 'tracker'    && <TrackerView />}
         {activeView === 'characters' && <CharactersView />}
         {activeView === 'profiles'   && <ProfilesView />}
-        {activeView === 'settings'   && <div className="p-8 text-gray-400">Settings — coming in Phase 6</div>}
+        {activeView === 'settings'   && <SettingsView />}
       </main>
     </div>
   );

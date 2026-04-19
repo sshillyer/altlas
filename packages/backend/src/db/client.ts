@@ -110,4 +110,10 @@ export function runMigrations(): void {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_profile_tasks_unique
       ON profile_tasks(profile_id, task_definition_id);
   `);
+
+  // Additive migrations — safe to run on existing databases
+  const charCols = sqlite.prepare('PRAGMA table_info(characters)').all() as Array<{ name: string }>;
+  if (!charCols.some((c) => c.name === 'is_tracked')) {
+    sqlite.exec('ALTER TABLE characters ADD COLUMN is_tracked INTEGER NOT NULL DEFAULT 1');
+  }
 }

@@ -34,6 +34,19 @@ const patch = <T>(path: string, body: unknown) =>
   request<T>(path, { method: 'PATCH', body: JSON.stringify(body) });
 const del = <T>(path: string) => request<T>(path, { method: 'DELETE' });
 
+export interface BnetAuthStatus {
+  available: boolean;
+  connected: boolean;
+  expiresAt: string | null;
+}
+
+export interface SyncResult {
+  added: number;
+  updated: number;
+  skipped: number;
+  characters: Character[];
+}
+
 export const api = {
   characters: {
     list: () => get<Character[]>('/api/characters'),
@@ -61,5 +74,33 @@ export const api = {
   },
   settings: {
     get: () => get<Record<string, string>>('/api/settings'),
+    update: (body: Record<string, string>) => patch<Record<string, string>>('/api/settings', body),
+  },
+  auth: {
+    status: () => get<BnetAuthStatus>('/api/auth/status'),
+    getBnetUrl: () => get<{ available: boolean; url?: string }>('/api/auth/bnet/url'),
+    disconnect: () => del<void>('/api/auth/bnet'),
+  },
+  sync: {
+    all: () => post<SyncResult>('/api/sync/characters', {}),
+    single: (id: string) => post<Character>(`/api/sync/characters/${id}`, {}),
+  },
+  resets: {
+    schedule: () => get<{
+      region: string;
+      nextDaily: string;
+      nextWeekly: string;
+      lastDailyReset: string;
+      lastWeeklyReset: string;
+    }>('/api/resets/schedule'),
+    log: () => get<Array<{
+      id: string;
+      resetType: string;
+      region: string;
+      scheduledAt: string;
+      executedAt: string;
+      rowsAffected: number;
+    }>>('/api/resets/log'),
+    trigger: (type: 'daily' | 'weekly') => post<{ ok: boolean }>('/api/resets/trigger', { type }),
   },
 };

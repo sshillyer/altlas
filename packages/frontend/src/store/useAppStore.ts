@@ -8,10 +8,12 @@ interface AppState {
   activeProfileId: string | null;
   profiles: Profile[];
   region: string;
+  bnetAvailable: boolean;
   bnetConnected: boolean;
   setActiveView: (view: View) => void;
   setActiveProfile: (id: string | null) => void;
   setProfiles: (profiles: Profile[]) => void;
+  setBnetStatus: (available: boolean, connected: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -19,8 +21,10 @@ export const useAppStore = create<AppState>((set) => ({
   activeProfileId: null,
   profiles: [],
   region: 'us',
+  bnetAvailable: false,
   bnetConnected: false,
   setActiveView: (view) => set({ activeView: view }),
   setActiveProfile: (id) => set({ activeProfileId: id }),
   setProfiles: (profiles) => set({ profiles }),
+  setBnetStatus: (available, connected) => set({ bnetAvailable: available, bnetConnected: connected }),
 }));

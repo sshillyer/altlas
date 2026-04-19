@@ -20,6 +20,7 @@ export interface Character {
   professionB: string | null;
   bnetId: string | null;
   isMain: boolean;
+  isTracked: boolean;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;

@@ -1,7 +1,4 @@
-import { config } from 'dotenv';
-import { join } from 'path';
-
-config({ path: join(__dirname, '../../../.env') });
+import './loadEnv'; // must be first — loads .env before any other module reads process.env
 
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -12,6 +9,8 @@ import taskRoutes from './routes/tasks';
 import resetRoutes from './routes/resets';
 import profileRoutes from './routes/profiles';
 import settingsRoutes from './routes/settings';
+import authRoutes from './routes/auth';
+import syncRoutes from './routes/sync';
 import { initScheduler } from './scheduler/resetJobs';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
@@ -37,6 +36,8 @@ async function start() {
   await app.register(resetRoutes);
   await app.register(profileRoutes);
   await app.register(settingsRoutes);
+  await app.register(authRoutes);
+  await app.register(syncRoutes);
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
 }

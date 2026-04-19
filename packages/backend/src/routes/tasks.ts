@@ -43,6 +43,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const allCharacters = db
       .select()
       .from(characters)
+      .where(eq(characters.isTracked, true))
       .orderBy(asc(characters.sortOrder))
       .all();
 

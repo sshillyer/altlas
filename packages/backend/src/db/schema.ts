@@ -13,6 +13,7 @@ export const characters = sqliteTable('characters', {
   professionB: text('profession_b'),
   bnetId:      text('bnet_id'),
   isMain:      integer('is_main', { mode: 'boolean' }).default(false),
+  isTracked:   integer('is_tracked', { mode: 'boolean' }).default(true).notNull(),
   sortOrder:   integer('sort_order').default(0),
   createdAt:   text('created_at').notNull(),
   updatedAt:   text('updated_at').notNull(),
