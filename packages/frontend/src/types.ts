@@ -67,6 +67,24 @@ export interface TrackerState {
   nextWeeklyReset: string;
 }
 
+export interface Profile {
+  id: string;
+  name: string;
+  description: string | null;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+export interface ProfileWithTasks extends Profile {
+  taskDefinitionIds: string[];
+}
+
+export interface CreateProfileDto {
+  name: string;
+  description?: string;
+  taskDefinitionIds: string[];
+}
+
 export interface CreateCharacterDto {
   name: string;
   realm: string;

@@ -1,4 +1,12 @@
-import type { Character, CreateCharacterDto, TrackerState } from '../types';
+import type {
+  Character,
+  CreateCharacterDto,
+  TrackerState,
+  TaskDefinition,
+  Profile,
+  ProfileWithTasks,
+  CreateProfileDto,
+} from '../types';
 
 const BASE = import.meta.env.VITE_API_URL ?? '';
 
@@ -36,7 +44,22 @@ export const api = {
   },
   tasks: {
     getState: () => get<TrackerState>('/api/tasks/state'),
+    definitions: (active?: boolean) =>
+      get<TaskDefinition[]>(`/api/tasks/definitions${active !== undefined ? `?active=${active}` : ''}`),
     toggleCell: (characterTaskId: string, completedAt: string | null) =>
       patch<unknown>(`/api/tasks/character/${characterTaskId}`, { completedAt }),
+  },
+  profiles: {
+    list: () => get<Profile[]>('/api/profiles'),
+    create: (body: CreateProfileDto) => post<Profile>('/api/profiles', body),
+    get: (id: string) => get<ProfileWithTasks>(`/api/profiles/${id}`),
+    update: (id: string, body: Partial<CreateProfileDto>) =>
+      patch<ProfileWithTasks>(`/api/profiles/${id}`, body),
+    delete: (id: string) => del<void>(`/api/profiles/${id}`),
+    activate: (id: string) =>
+      post<{ success: boolean; activeProfileId: string }>(`/api/profiles/${id}/activate`, {}),
+  },
+  settings: {
+    get: () => get<Record<string, string>>('/api/settings'),
   },
 };

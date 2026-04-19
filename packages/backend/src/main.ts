@@ -10,6 +10,8 @@ import { runSeeder } from './seed/seeder';
 import characterRoutes from './routes/characters';
 import taskRoutes from './routes/tasks';
 import resetRoutes from './routes/resets';
+import profileRoutes from './routes/profiles';
+import settingsRoutes from './routes/settings';
 import { initScheduler } from './scheduler/resetJobs';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
@@ -33,6 +35,8 @@ async function start() {
   await app.register(characterRoutes);
   await app.register(taskRoutes);
   await app.register(resetRoutes);
+  await app.register(profileRoutes);
+  await app.register(settingsRoutes);
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
 }

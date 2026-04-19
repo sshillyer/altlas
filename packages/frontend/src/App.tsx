@@ -1,6 +1,9 @@
+import { useEffect } from 'react';
 import { useAppStore, type View } from './store/useAppStore';
 import { CharactersView } from './views/CharactersView';
 import { TrackerView } from './views/TrackerView';
+import { ProfilesView } from './views/ProfilesView';
+import { api } from './api/client';
 
 const NAV_TABS: { view: View; label: string }[] = [
   { view: 'tracker',    label: 'Tracker' },
@@ -10,7 +13,14 @@ const NAV_TABS: { view: View; label: string }[] = [
 ];
 
 export default function App() {
-  const { activeView, setActiveView } = useAppStore();
+  const { activeView, setActiveView, setActiveProfile, setProfiles } = useAppStore();
+
+  useEffect(() => {
+    Promise.all([api.settings.get(), api.profiles.list()]).then(([settings, profileList]) => {
+      setProfiles(profileList);
+      setActiveProfile(settings['active_profile_id'] ?? null);
+    });
+  }, [setActiveProfile, setProfiles]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -36,7 +46,7 @@ export default function App() {
       <main>
         {activeView === 'tracker'    && <TrackerView />}
         {activeView === 'characters' && <CharactersView />}
-        {activeView === 'profiles'   && <div className="p-8 text-gray-400">Profiles — coming in Phase 5</div>}
+        {activeView === 'profiles'   && <ProfilesView />}
         {activeView === 'settings'   && <div className="p-8 text-gray-400">Settings — coming in Phase 6</div>}
       </main>
     </div>

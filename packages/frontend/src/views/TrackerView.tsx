@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { useAppStore } from '../store/useAppStore';
+import { api } from '../api/client';
 import { CLASS_COLORS } from '../types';
-import type { Character, CharacterTaskState } from '../types';
+import type { Character, CharacterTaskState, Profile } from '../types';
 
 // ─── Reset strip ────────────────────────────────────────────────────────────
 
@@ -23,19 +24,51 @@ function useCountdown(targetIso: string): string {
   return `${s}s`;
 }
 
+function ProfileSelector() {
+  const { activeProfileId, profiles, setActiveProfile } = useAppStore();
+  const { fetchTracker } = useTrackerStore();
+
+  const resolvedActiveId = activeProfileId ?? profiles.find((p) => p.isDefault)?.id ?? '';
+
+  async function handleChange(id: string) {
+    await api.profiles.activate(id);
+    setActiveProfile(id);
+    fetchTracker();
+  }
+
+  if (profiles.length === 0) return null;
+
+  return (
+    <select
+      value={resolvedActiveId}
+      onChange={(e) => handleChange(e.target.value)}
+      className="bg-gray-700 border border-gray-600 rounded px-2 py-0.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500 cursor-pointer"
+    >
+      {profiles.map((p: Profile) => (
+        <option key={p.id} value={p.id}>
+          {p.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function ResetStrip({ nextDaily, nextWeekly }: { nextDaily: string; nextWeekly: string }) {
   const dailyCountdown  = useCountdown(nextDaily);
   const weeklyCountdown = useCountdown(nextWeekly);
   return (
-    <div className="flex gap-8 px-4 py-2 bg-gray-800 border-b border-gray-700 text-xs text-gray-400 shrink-0">
-      <span>
-        Daily reset:{' '}
-        <span className="text-white font-medium tabular-nums">{dailyCountdown}</span>
-      </span>
-      <span>
-        Weekly reset:{' '}
-        <span className="text-white font-medium tabular-nums">{weeklyCountdown}</span>
-      </span>
+    <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700 text-xs text-gray-400 shrink-0">
+      <div className="flex gap-8">
+        <span>
+          Daily reset:{' '}
+          <span className="text-white font-medium tabular-nums">{dailyCountdown}</span>
+        </span>
+        <span>
+          Weekly reset:{' '}
+          <span className="text-white font-medium tabular-nums">{weeklyCountdown}</span>
+        </span>
+      </div>
+      <ProfileSelector />
     </div>
   );
 }

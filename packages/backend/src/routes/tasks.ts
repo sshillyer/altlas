@@ -26,6 +26,18 @@ const CATEGORY_LABELS: Record<string, string> = {
 const CATEGORY_ORDER = ['vault', 'profession', 'pvp', 'delve', 'world', 'dungeon', 'raid', 'misc'];
 
 export default async function taskRoutes(fastify: FastifyInstance) {
+  // GET /api/tasks/definitions
+  fastify.get('/api/tasks/definitions', async (req) => {
+    const { active, expansion } = req.query as { active?: string; expansion?: string };
+    const onlyActive = active === 'true';
+    const allDefs = db.select().from(taskDefinitions).orderBy(asc(taskDefinitions.sortOrder)).all();
+    return allDefs.filter((d) => {
+      if (onlyActive && !d.isActive) return false;
+      if (expansion && d.expansion !== expansion) return false;
+      return true;
+    });
+  });
+
   // GET /api/tasks/state
   fastify.get('/api/tasks/state', async () => {
     const allCharacters = db
