@@ -1,12 +1,12 @@
-# AltWatch — Project Overview
+# Altlas — Project Overview
 
 > **Audience:** This document is written for a Claude Code agent. Read all docs in numerical order before writing any code. Follow the phased build plan in `07_PHASES.md` strictly — do not implement features from a later phase until the current phase is complete. When in doubt, build the simplest thing that works and move on.
 
 ---
 
-## What Is AltWatch?
+## What Is Altlas?
 
-AltWatch is a self-hosted, local-first web application for World of Warcraft players who actively manage multiple characters (alts). It provides:
+Altlas is a self-hosted, local-first web application for World of Warcraft players who actively manage multiple characters (alts). It provides:
 
 - A weekly/daily task tracker across all characters, with automatic resets on the correct WoW schedule
 - Character management with profession assignments, class tracking, and per-character task enable/disable
@@ -49,7 +49,7 @@ The app is designed to run locally via Docker Compose or directly via Node.js. T
 ## Repository Structure
 
 ```
-altwatch/
+altlas/
 ├── docker-compose.yml
 ├── docker-compose.dev.yml
 ├── .env.example
@@ -91,7 +91,7 @@ altwatch/
 ├── seed/
 │   └── tasks.json             # canonical Midnight task definitions
 └── data/
-    └── altwatch.db            # SQLite file (gitignored, Docker volume)
+    └── altlas.db            # SQLite file (gitignored, Docker volume)
 ```
 
 ---
@@ -104,7 +104,7 @@ Store in `.env` (copied from `.env.example`). Never commit `.env`.
 # Required
 PORT=3001
 FRONTEND_URL=http://localhost:5173
-DB_PATH=./data/altwatch.db
+DB_PATH=./data/altlas.db
 
 # Battle.net OAuth (optional — app works without these)
 BNET_CLIENT_ID=

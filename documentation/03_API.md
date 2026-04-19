@@ -1,4 +1,4 @@
-# AltWatch — API Routes
+# Altlas — API Routes
 
 All routes are served by Fastify at `http://localhost:3001`. The frontend communicates exclusively through this API. All request/response bodies are JSON. Dates are ISO 8601 strings.
 

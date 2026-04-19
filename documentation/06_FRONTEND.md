@@ -1,4 +1,4 @@
-# AltWatch — Frontend Architecture
+# Altlas — Frontend Architecture
 
 The frontend is a React + TypeScript + Vite single-page application. It communicates with the backend exclusively via the typed API client in `src/api/`. There is no direct database access from the frontend.
 

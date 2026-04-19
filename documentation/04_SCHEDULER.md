@@ -1,4 +1,4 @@
-# AltWatch — Reset Scheduler
+# Altlas — Reset Scheduler
 
 The reset scheduler is a node-cron job that runs inside the Fastify backend process. It is responsible for clearing `completedAt` on `character_tasks` rows at the correct WoW reset times.
 

@@ -1,4 +1,4 @@
-# AltWatch — Database Schema
+# Altlas — Database Schema
 
 All tables are defined using **Drizzle ORM** with the `better-sqlite3` driver. The schema file lives at `packages/backend/src/db/schema.ts`. Run migrations via `drizzle-kit push` during development.
 

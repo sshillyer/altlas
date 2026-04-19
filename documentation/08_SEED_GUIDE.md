@@ -1,4 +1,4 @@
-# AltWatch — Seed Data Guide
+# Altlas — Seed Data Guide
 
 The file `seed/tasks.json` is the canonical source of truth for all trackable tasks. It is read by `seeder.ts` at startup. No application code should hardcode task names or categories.
 

@@ -1,4 +1,4 @@
-# AltWatch — Phased Build Plan
+# Altlas — Phased Build Plan
 
 > **For Claude Code:** Read all prior docs (01–06) before starting any phase. Implement phases in order. Do not skip ahead. Each phase has explicit acceptance criteria — do not move on until they pass.
 
@@ -7,7 +7,7 @@
 ## Suggested Prompt Pattern
 
 ```
-I'm building AltWatch, a self-hosted WoW alt tracker. Here are the architecture docs:
+I'm building Altlas, a self-hosted WoW alt tracker. Here are the architecture docs:
 [attach relevant .md files]
 
 Please implement Phase X: [phase name].
@@ -27,7 +27,7 @@ Ask me before making decisions that aren't covered by the docs.
 **Deliverables:**
 - `pnpm-workspace.yaml` with `packages/*`
 - `packages/backend/` — Fastify app, TypeScript, `GET /api/health` returns `{ ok: true }`
-- `packages/frontend/` — Vite + React + TypeScript, renders `<h1>AltWatch</h1>`
+- `packages/frontend/` — Vite + React + TypeScript, renders `<h1>Altlas</h1>`
 - `docker-compose.yml` with backend service + volume mount for `./data`
 - `.env.example` with all variables
 - `packages/backend/src/db/` — Drizzle schema (all tables from `02_SCHEMA.md`), `client.ts` connecting to `DB_PATH`
@@ -37,7 +37,7 @@ Ask me before making decisions that aren't covered by the docs.
 - `docker compose up` starts cleanly
 - `GET http://localhost:3001/api/health` returns `{ ok: true }`
 - Frontend loads at `http://localhost:5173`
-- SQLite file created at `./data/altwatch.db`
+- SQLite file created at `./data/altlas.db`
 
 ---
 

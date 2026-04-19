@@ -1,4 +1,4 @@
-# AltWatch — Battle.net Integration
+# Altlas — Battle.net Integration
 
 Battle.net integration is **fully optional**. The app works completely without it. Characters can be created and managed manually. Bnet sync adds ilvl, profession data, and character enrichment on top of whatever the user has already set up.
 
