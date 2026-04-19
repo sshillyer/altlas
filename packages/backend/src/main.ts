@@ -9,6 +9,8 @@ import { runMigrations } from './db/client';
 import { runSeeder } from './seed/seeder';
 import characterRoutes from './routes/characters';
 import taskRoutes from './routes/tasks';
+import resetRoutes from './routes/resets';
+import { initScheduler } from './scheduler/resetJobs';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
@@ -16,6 +18,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 async function start() {
   runMigrations();
   runSeeder();
+  initScheduler();
 
   const app = Fastify({ logger: true });
 
@@ -29,6 +32,7 @@ async function start() {
 
   await app.register(characterRoutes);
   await app.register(taskRoutes);
+  await app.register(resetRoutes);
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
 }

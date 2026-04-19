@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { useAppStore } from '../store/useAppStore';
 import { CLASS_COLORS } from '../types';
@@ -6,27 +6,35 @@ import type { Character, CharacterTaskState } from '../types';
 
 // ─── Reset strip ────────────────────────────────────────────────────────────
 
-function formatReset(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  });
+function useCountdown(targetIso: string): string {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const diff = new Date(targetIso).getTime() - now;
+  if (diff <= 0) return '0s';
+  const h = Math.floor(diff / 3_600_000);
+  const m = Math.floor((diff % 3_600_000) / 60_000);
+  const s = Math.floor((diff % 60_000) / 1_000);
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }
 
 function ResetStrip({ nextDaily, nextWeekly }: { nextDaily: string; nextWeekly: string }) {
+  const dailyCountdown  = useCountdown(nextDaily);
+  const weeklyCountdown = useCountdown(nextWeekly);
   return (
     <div className="flex gap-8 px-4 py-2 bg-gray-800 border-b border-gray-700 text-xs text-gray-400 shrink-0">
       <span>
-        Daily:{' '}
-        <span className="text-white font-medium">{formatReset(nextDaily)}</span>
+        Daily reset:{' '}
+        <span className="text-white font-medium tabular-nums">{dailyCountdown}</span>
       </span>
       <span>
-        Weekly:{' '}
-        <span className="text-white font-medium">{formatReset(nextWeekly)}</span>
+        Weekly reset:{' '}
+        <span className="text-white font-medium tabular-nums">{weeklyCountdown}</span>
       </span>
     </div>
   );

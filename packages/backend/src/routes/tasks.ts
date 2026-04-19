@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { eq, asc, and, inArray } from 'drizzle-orm';
 import { db } from '../db/client';
+import { getRegion } from '../settings';
+import { getNextResets } from '../scheduler/resetUtils';
 import {
   characters,
   taskDefinitions,
@@ -22,26 +24,6 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_ORDER = ['vault', 'profession', 'pvp', 'delve', 'world', 'dungeon', 'raid', 'misc'];
-
-function getNextDailyReset(): string {
-  const now = new Date();
-  const next = new Date(now);
-  next.setUTCHours(15, 0, 0, 0);
-  if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
-  return next.toISOString();
-}
-
-function getNextWeeklyReset(): string {
-  // US region: Tuesday = day 2 at 15:00 UTC
-  const now = new Date();
-  const next = new Date(now);
-  next.setUTCHours(15, 0, 0, 0);
-  const currentDay = next.getUTCDay();
-  let daysUntil = 2 - currentDay; // 2 = Tuesday
-  if (daysUntil < 0 || (daysUntil === 0 && next <= now)) daysUntil += 7;
-  next.setUTCDate(next.getUTCDate() + daysUntil);
-  return next.toISOString();
-}
 
 export default async function taskRoutes(fastify: FastifyInstance) {
   // GET /api/tasks/state
@@ -171,11 +153,12 @@ export default async function taskRoutes(fastify: FastifyInstance) {
       });
     }
 
+    const { nextDaily, nextWeekly } = getNextResets(getRegion());
     return {
       characters: allCharacters,
       taskGroups,
-      nextDailyReset: getNextDailyReset(),
-      nextWeeklyReset: getNextWeeklyReset(),
+      nextDailyReset: nextDaily.toISOString(),
+      nextWeeklyReset: nextWeekly.toISOString(),
     };
   });
 
