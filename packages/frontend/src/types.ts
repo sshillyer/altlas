@@ -25,6 +25,48 @@ export interface Character {
   updatedAt: string;
 }
 
+export interface TaskDefinition {
+  id: string;
+  name: string;
+  description: string | null;
+  category: TaskCategory;
+  resetType: ResetType;
+  scope: TaskScope;
+  expansion: string;
+  season: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  notes: string | null;
+}
+
+export interface CharacterTaskState {
+  characterTaskId: string;
+  isEnabled: boolean;
+  completedAt: string | null;
+  notes: string | null;
+}
+
+export interface TrackerTask {
+  definitionId: string;
+  name: string;
+  resetType: ResetType;
+  scope: TaskScope;
+  characterState: Record<string, CharacterTaskState>; // keyed by characterId
+}
+
+export interface TrackerTaskGroup {
+  category: TaskCategory;
+  label: string;
+  tasks: TrackerTask[];
+}
+
+export interface TrackerState {
+  characters: Character[];
+  taskGroups: TrackerTaskGroup[];
+  nextDailyReset: string;
+  nextWeeklyReset: string;
+}
+
 export interface CreateCharacterDto {
   name: string;
   realm: string;

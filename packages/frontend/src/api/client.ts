@@ -1,4 +1,4 @@
-import type { Character, CreateCharacterDto } from '../types';
+import type { Character, CreateCharacterDto, TrackerState } from '../types';
 
 const BASE = import.meta.env.VITE_API_URL ?? '';
 
@@ -33,5 +33,10 @@ export const api = {
     update: (id: string, body: Partial<Character>) => patch<Character>(`/api/characters/${id}`, body),
     delete: (id: string) => del<void>(`/api/characters/${id}`),
     reorder: (order: string[]) => post<{ success: boolean }>('/api/characters/reorder', { order }),
+  },
+  tasks: {
+    getState: () => get<TrackerState>('/api/tasks/state'),
+    toggleCell: (characterTaskId: string, completedAt: string | null) =>
+      patch<unknown>(`/api/tasks/character/${characterTaskId}`, { completedAt }),
   },
 };

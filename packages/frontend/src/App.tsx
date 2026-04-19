@@ -1,5 +1,6 @@
 import { useAppStore, type View } from './store/useAppStore';
 import { CharactersView } from './views/CharactersView';
+import { TrackerView } from './views/TrackerView';
 
 const NAV_TABS: { view: View; label: string }[] = [
   { view: 'tracker',    label: 'Tracker' },
@@ -33,7 +34,7 @@ export default function App() {
       </header>
 
       <main>
-        {activeView === 'tracker'    && <div className="p-8 text-gray-400">Tracker — coming in Phase 3</div>}
+        {activeView === 'tracker'    && <TrackerView />}
         {activeView === 'characters' && <CharactersView />}
         {activeView === 'profiles'   && <div className="p-8 text-gray-400">Profiles — coming in Phase 5</div>}
         {activeView === 'settings'   && <div className="p-8 text-gray-400">Settings — coming in Phase 6</div>}

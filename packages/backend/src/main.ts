@@ -8,6 +8,7 @@ import cors from '@fastify/cors';
 import { runMigrations } from './db/client';
 import { runSeeder } from './seed/seeder';
 import characterRoutes from './routes/characters';
+import taskRoutes from './routes/tasks';
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10);
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
@@ -27,6 +28,7 @@ async function start() {
   });
 
   await app.register(characterRoutes);
+  await app.register(taskRoutes);
 
   await app.listen({ port: PORT, host: '0.0.0.0' });
 }
