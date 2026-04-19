@@ -154,8 +154,12 @@ export function CharactersView() {
   }
 
   async function handleDelete(id: string) {
-    await api.characters.delete(id).catch(console.error);
-    setCharacters((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await api.characters.delete(id);
+      setCharacters((prev) => prev.filter((c) => c.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete character');
+    }
   }
 
   async function handleAddSubmit(e: React.FormEvent) {
