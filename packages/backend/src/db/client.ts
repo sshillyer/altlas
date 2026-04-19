@@ -4,7 +4,7 @@ import { mkdirSync, existsSync } from 'fs';
 import { dirname, resolve, isAbsolute } from 'path';
 import * as schema from './schema';
 
-const rawDbPath = process.env.DB_PATH ?? './data/altwatch.db';
+const rawDbPath = process.env.DB_PATH ?? './data/altlas.db';
 // Resolve relative paths from the repo root (3 levels up from src/db/ or dist/db/)
 const dbPath = isAbsolute(rawDbPath)
   ? rawDbPath

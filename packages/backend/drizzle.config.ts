@@ -9,6 +9,6 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'sqlite',
   dbCredentials: {
-    url: process.env.DB_PATH ?? './data/altwatch.db',
+    url: process.env.DB_PATH ?? './data/altlas.db',
   },
 });
