@@ -22,16 +22,35 @@ import { CLASS_COLORS, WOW_CLASSES, type Character, type CreateCharacterDto, typ
 
 type SortKey = 'ilvl' | 'level' | 'name';
 
+interface EditForm {
+  spec: string;
+  professionA: string;
+  professionB: string;
+  isMain: boolean;
+}
+
 function SortableRow({
   char,
   onDelete,
   onToggleTracked,
+  onUpdate,
 }: {
   char: Character;
   onDelete: (id: string) => void;
   onToggleTracked: (id: string, current: boolean) => void;
+  onUpdate: (updated: Character) => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm>({
+    spec: char.spec ?? '',
+    professionA: char.professionA ?? '',
+    professionB: char.professionB ?? '',
+    isMain: char.isMain,
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: char.id });
 
@@ -44,89 +63,198 @@ function SortableRow({
   const classColor = CLASS_COLORS[char.class] ?? '#888';
   const professions = [char.professionA, char.professionB].filter(Boolean).join(', ') || 'No professions';
 
+  function handleStartEdit() {
+    setEditForm({
+      spec: char.spec ?? '',
+      professionA: char.professionA ?? '',
+      professionB: char.professionB ?? '',
+      isMain: char.isMain,
+    });
+    setEditError(null);
+    setIsEditing(true);
+  }
+
+  async function handleSaveEdit() {
+    setIsSaving(true);
+    setEditError(null);
+    try {
+      const updated = await api.characters.update(char.id, {
+        spec: editForm.spec || undefined,
+        professionA: editForm.professionA || undefined,
+        professionB: editForm.professionB || undefined,
+        isMain: editForm.isMain,
+      });
+      onUpdate(updated);
+      setIsEditing(false);
+    } catch (e) {
+      setEditError(e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center gap-3 rounded px-3 py-2 group transition-colors ${
-        char.isTracked ? 'bg-gray-800' : 'bg-gray-800/40'
-      }`}
-    >
-      <button
-        {...listeners}
-        {...attributes}
-        className="text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
-        aria-label="Drag to reorder"
-      >
-        ⠿
-      </button>
-
+    <div ref={setNodeRef} style={style}>
+      {/* Main row */}
       <div
-        className="w-2 h-8 rounded-sm flex-shrink-0"
-        style={{ backgroundColor: char.isTracked ? classColor : '#4b5563' }}
-      />
-
-      <div className="flex-1 min-w-0">
-        <span className={`font-medium ${char.isTracked ? 'text-white' : 'text-gray-500'}`}>
-          {char.name}
-          {char.isMain && <span className="ml-1 text-xs text-yellow-400">★</span>}
-        </span>
-        <span className="text-gray-400 text-sm ml-1">— {char.realm}</span>
-      </div>
-
-      <div className="text-sm text-gray-500 w-10 text-right hidden sm:block">
-        {char.level ?? '—'}
-      </div>
-
-      <div className="text-sm text-gray-400 w-20 text-right">
-        {char.ilvl != null ? `${char.ilvl} ilvl` : '—'}
-      </div>
-
-      <div className="text-sm text-gray-500 w-40 hidden sm:block truncate" title={professions}>
-        {professions}
-      </div>
-
-      <div className="text-xs text-gray-500 capitalize w-20 hidden md:block">
-        {char.class.replace('deathknight', 'DK').replace('demonhunter', 'DH')}
-      </div>
-
-      {/* Tracker toggle */}
-      <button
-        onClick={() => onToggleTracked(char.id, char.isTracked)}
-        title={char.isTracked ? 'Shown on tracker — click to hide' : 'Hidden from tracker — click to show'}
-        className={`text-xs px-2 py-0.5 rounded border transition-colors flex-shrink-0 ${
-          char.isTracked
-            ? 'border-blue-600 text-blue-400 hover:border-red-500 hover:text-red-400'
-            : 'border-gray-600 text-gray-600 hover:border-blue-600 hover:text-blue-400'
-        }`}
+        className={`flex items-center gap-3 rounded px-3 py-2 group transition-colors ${
+          char.isTracked ? 'bg-gray-800' : 'bg-gray-800/40'
+        } ${isEditing ? 'rounded-b-none' : ''}`}
       >
-        {char.isTracked ? 'Tracked' : 'Hidden'}
-      </button>
-
-      {confirmDelete ? (
-        <div className="flex items-center gap-1 text-sm">
-          <span className="text-red-400">Delete {char.name}?</span>
-          <button
-            onClick={() => onDelete(char.id)}
-            className="px-2 py-0.5 bg-red-600 hover:bg-red-500 rounded text-white text-xs"
-          >
-            Yes
-          </button>
-          <button
-            onClick={() => setConfirmDelete(false)}
-            className="px-2 py-0.5 bg-gray-600 hover:bg-gray-500 rounded text-white text-xs"
-          >
-            Cancel
-          </button>
-        </div>
-      ) : (
         <button
-          onClick={() => setConfirmDelete(true)}
-          className="text-gray-600 hover:text-red-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label={`Delete ${char.name}`}
+          {...listeners}
+          {...attributes}
+          className="text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Drag to reorder"
         >
-          ✕
+          ⠿
         </button>
+
+        <div
+          className="w-2 h-8 rounded-sm flex-shrink-0"
+          style={{ backgroundColor: char.isTracked ? classColor : '#4b5563' }}
+        />
+
+        <div className="flex-1 min-w-0">
+          <span className={`font-medium ${char.isTracked ? 'text-white' : 'text-gray-500'}`}>
+            {char.name}
+            {char.isMain && <span className="ml-1 text-xs text-yellow-400">★</span>}
+          </span>
+          <span className="text-gray-400 text-sm ml-1">— {char.realm}</span>
+        </div>
+
+        <div className="text-sm text-gray-500 w-10 text-right hidden sm:block">
+          {char.level ?? '—'}
+        </div>
+
+        <div className="text-sm text-gray-400 w-20 text-right">
+          {char.ilvl != null ? `${char.ilvl} ilvl` : '—'}
+        </div>
+
+        <div className="text-sm text-gray-500 w-40 hidden sm:block truncate" title={professions}>
+          {professions}
+        </div>
+
+        <div className="text-xs text-gray-500 capitalize w-20 hidden md:block">
+          {char.class.replace('deathknight', 'DK').replace('demonhunter', 'DH')}
+        </div>
+
+        {/* Edit button */}
+        <button
+          onClick={() => (isEditing ? setIsEditing(false) : handleStartEdit())}
+          title={isEditing ? 'Cancel edit' : 'Edit spec, professions, main status'}
+          className={`text-xs px-2 py-0.5 rounded border transition-colors flex-shrink-0 ${
+            isEditing
+              ? 'border-gray-500 text-gray-400 hover:border-gray-400'
+              : 'border-gray-700 text-gray-600 hover:border-gray-500 hover:text-gray-400 opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          {isEditing ? 'Cancel' : 'Edit'}
+        </button>
+
+        {/* Tracker toggle */}
+        <button
+          onClick={() => onToggleTracked(char.id, char.isTracked)}
+          title={char.isTracked ? 'Shown on tracker — click to hide' : 'Hidden from tracker — click to show'}
+          className={`text-xs px-2 py-0.5 rounded border transition-colors flex-shrink-0 ${
+            char.isTracked
+              ? 'border-blue-600 text-blue-400 hover:border-red-500 hover:text-red-400'
+              : 'border-gray-600 text-gray-600 hover:border-blue-600 hover:text-blue-400'
+          }`}
+        >
+          {char.isTracked ? 'Tracked' : 'Hidden'}
+        </button>
+
+        {confirmDelete ? (
+          <div className="flex items-center gap-1 text-sm">
+            <span className="text-red-400">Delete {char.name}?</span>
+            <button
+              onClick={() => onDelete(char.id)}
+              className="px-2 py-0.5 bg-red-600 hover:bg-red-500 rounded text-white text-xs"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="px-2 py-0.5 bg-gray-600 hover:bg-gray-500 rounded text-white text-xs"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="text-gray-600 hover:text-red-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label={`Delete ${char.name}`}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {/* Inline edit panel */}
+      {isEditing && (
+        <div className="bg-gray-750 border border-t-0 border-gray-700 rounded-b px-4 py-3 grid grid-cols-2 gap-3 bg-gray-800/80">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Spec</span>
+            <input
+              value={editForm.spec}
+              onChange={(e) => setEditForm((f) => ({ ...f, spec: e.target.value }))}
+              className="bg-gray-700 text-white rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-blue-500"
+              placeholder="beast_mastery"
+            />
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-gray-300 mt-4">
+            <input
+              type="checkbox"
+              checked={editForm.isMain}
+              onChange={(e) => setEditForm((f) => ({ ...f, isMain: e.target.checked }))}
+              className="rounded"
+            />
+            Main character
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Profession A</span>
+            <input
+              value={editForm.professionA}
+              onChange={(e) => setEditForm((f) => ({ ...f, professionA: e.target.value }))}
+              className="bg-gray-700 text-white rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-blue-500"
+              placeholder="mining"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-gray-400">Profession B</span>
+            <input
+              value={editForm.professionB}
+              onChange={(e) => setEditForm((f) => ({ ...f, professionB: e.target.value }))}
+              className="bg-gray-700 text-white rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-blue-500"
+              placeholder="engineering"
+            />
+          </label>
+
+          {editError && (
+            <p className="col-span-2 text-red-400 text-xs">{editError}</p>
+          )}
+
+          <div className="col-span-2 flex gap-2">
+            <button
+              onClick={handleSaveEdit}
+              disabled={isSaving}
+              className="px-4 py-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 rounded text-sm text-white"
+            >
+              {isSaving ? 'Saving…' : 'Save Changes'}
+            </button>
+            <button
+              onClick={() => setIsEditing(false)}
+              className="px-3 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-sm text-gray-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -204,14 +332,14 @@ export function CharactersView() {
     }
   }
 
+  function handleUpdate(updated: Character) {
+    setCharacters((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  }
+
   async function handleSort(key: SortKey) {
     const sorted = [...characters].sort((a, b) => {
-      if (key === 'ilvl') {
-        return (b.ilvl ?? -1) - (a.ilvl ?? -1);
-      }
-      if (key === 'level') {
-        return (b.level ?? 0) - (a.level ?? 0);
-      }
+      if (key === 'ilvl') return (b.ilvl ?? -1) - (a.ilvl ?? -1);
+      if (key === 'level') return (b.level ?? 0) - (a.level ?? 0);
       return a.name.localeCompare(b.name);
     });
     setCharacters(sorted);
@@ -267,7 +395,6 @@ export function CharactersView() {
         <h2 className="text-xl font-bold text-white">Characters</h2>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Sort by */}
           {characters.length > 1 && (
             <div className="flex items-center gap-1">
               <span className="text-xs text-gray-500">Sort by:</span>
@@ -419,7 +546,6 @@ export function CharactersView() {
         </form>
       )}
 
-      {/* Column headers */}
       {characters.length > 0 && (
         <div className="flex items-center gap-3 px-3 mb-1 text-xs text-gray-600 select-none">
           <span className="w-4" />
@@ -429,6 +555,7 @@ export function CharactersView() {
           <span className="w-20 text-right">iLvl</span>
           <span className="w-40 hidden sm:block">Professions</span>
           <span className="w-20 hidden md:block">Class</span>
+          <span className="w-14">Edit</span>
           <span className="w-16">Tracker</span>
           <span className="w-4" />
         </div>
@@ -446,6 +573,7 @@ export function CharactersView() {
                   char={char}
                   onDelete={handleDelete}
                   onToggleTracked={handleToggleTracked}
+                  onUpdate={handleUpdate}
                 />
               ))}
             </div>

@@ -61,6 +61,10 @@ export const api = {
       get<TaskDefinition[]>(`/api/tasks/definitions${active !== undefined ? `?active=${active}` : ''}`),
     toggleCell: (characterTaskId: string, completedAt: string | null) =>
       patch<unknown>(`/api/tasks/character/${characterTaskId}`, { completedAt }),
+    saveNote: (characterTaskId: string, completedAt: string | null, notes: string | null) =>
+      patch<unknown>(`/api/tasks/character/${characterTaskId}`, { completedAt, notes }),
+    toggleEnabled: (characterTaskId: string) =>
+      patch<unknown>(`/api/tasks/character/${characterTaskId}/toggle-enabled`, {}),
   },
   profiles: {
     list: () => get<Profile[]>('/api/profiles'),

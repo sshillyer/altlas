@@ -178,7 +178,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
   // PATCH /api/tasks/character/:characterTaskId — toggle completion / update notes
   fastify.patch<{
     Params: { characterTaskId: string };
-    Body: { completedAt: string | null; notes?: string };
+    Body: { completedAt: string | null; notes?: string | null };
   }>('/api/tasks/character/:characterTaskId', async (req, reply) => {
     const { characterTaskId } = req.params;
     const { completedAt, notes } = req.body;
@@ -193,8 +193,29 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     db.update(characterTasks)
       .set({
         completedAt: completedAt ?? null,
-        ...(notes !== undefined ? { notes } : {}),
+        ...(notes !== undefined ? { notes: notes ?? null } : {}),
       })
+      .where(eq(characterTasks.id, characterTaskId))
+      .run();
+
+    return db.select().from(characterTasks).where(eq(characterTasks.id, characterTaskId)).get();
+  });
+
+  // PATCH /api/tasks/character/:characterTaskId/toggle-enabled
+  fastify.patch<{
+    Params: { characterTaskId: string };
+  }>('/api/tasks/character/:characterTaskId/toggle-enabled', async (req, reply) => {
+    const { characterTaskId } = req.params;
+
+    const existing = db
+      .select()
+      .from(characterTasks)
+      .where(eq(characterTasks.id, characterTaskId))
+      .get();
+    if (!existing) return reply.status(404).send({ error: 'Character task not found' });
+
+    db.update(characterTasks)
+      .set({ isEnabled: !existing.isEnabled })
       .where(eq(characterTasks.id, characterTaskId))
       .run();
 

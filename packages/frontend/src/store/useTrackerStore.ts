@@ -8,6 +8,31 @@ interface TrackerStore {
   error: string | null;
   fetchTracker: () => Promise<void>;
   toggleTask: (characterTaskId: string, currentCompletedAt: string | null) => Promise<void>;
+  saveNote: (characterTaskId: string, completedAt: string | null, notes: string | null) => Promise<void>;
+  toggleEnabled: (characterTaskId: string) => Promise<void>;
+}
+
+function patchCell(
+  data: TrackerState,
+  characterTaskId: string,
+  update: (cell: TrackerState['taskGroups'][number]['tasks'][number]['characterState'][string]) => TrackerState['taskGroups'][number]['tasks'][number]['characterState'][string],
+): TrackerState {
+  const taskGroups = data.taskGroups.map((group) => ({
+    ...group,
+    tasks: group.tasks.map((task) => {
+      const newCharState = { ...task.characterState };
+      let changed = false;
+      for (const charId of Object.keys(newCharState)) {
+        if (newCharState[charId].characterTaskId === characterTaskId) {
+          newCharState[charId] = update(newCharState[charId]);
+          changed = true;
+          break;
+        }
+      }
+      return changed ? { ...task, characterState: newCharState } : task;
+    }),
+  }));
+  return { ...data, taskGroups };
 }
 
 export const useTrackerStore = create<TrackerStore>((set, get) => ({
@@ -31,31 +56,40 @@ export const useTrackerStore = create<TrackerStore>((set, get) => ({
   toggleTask: async (characterTaskId, currentCompletedAt) => {
     const completedAt = currentCompletedAt ? null : new Date().toISOString();
 
-    // Optimistic update: scan task groups to find the matching cell by characterTaskId
     set((state) => {
       if (!state.trackerData) return state;
-      const taskGroups = state.trackerData.taskGroups.map((group) => ({
-        ...group,
-        tasks: group.tasks.map((task) => {
-          let changed = false;
-          const newCharState = { ...task.characterState };
-          for (const charId of Object.keys(newCharState)) {
-            if (newCharState[charId].characterTaskId === characterTaskId) {
-              newCharState[charId] = { ...newCharState[charId], completedAt };
-              changed = true;
-              break;
-            }
-          }
-          return changed ? { ...task, characterState: newCharState } : task;
-        }),
-      }));
-      return { trackerData: { ...state.trackerData, taskGroups } };
+      return { trackerData: patchCell(state.trackerData, characterTaskId, (cell) => ({ ...cell, completedAt })) };
     });
 
     try {
       await api.tasks.toggleCell(characterTaskId, completedAt);
     } catch {
-      // Revert by refetching from server
+      await get().fetchTracker();
+    }
+  },
+
+  saveNote: async (characterTaskId, completedAt, notes) => {
+    set((state) => {
+      if (!state.trackerData) return state;
+      return { trackerData: patchCell(state.trackerData, characterTaskId, (cell) => ({ ...cell, notes: notes ?? null })) };
+    });
+
+    try {
+      await api.tasks.saveNote(characterTaskId, completedAt, notes);
+    } catch {
+      await get().fetchTracker();
+    }
+  },
+
+  toggleEnabled: async (characterTaskId) => {
+    set((state) => {
+      if (!state.trackerData) return state;
+      return { trackerData: patchCell(state.trackerData, characterTaskId, (cell) => ({ ...cell, isEnabled: !cell.isEnabled })) };
+    });
+
+    try {
+      await api.tasks.toggleEnabled(characterTaskId);
+    } catch {
       await get().fetchTracker();
     }
   },

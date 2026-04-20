@@ -3,11 +3,20 @@ services:
     build:
       context: .
       dockerfile: packages/backend/Dockerfile
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     volumes:
       - ./data:/app/data
     env_file:
       - .env
     environment:
       DB_PATH: /app/data/altlas.db
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
