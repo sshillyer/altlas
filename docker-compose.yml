@@ -11,6 +11,13 @@ services:
       - .env
     environment:
       DB_PATH: /app/data/altlas.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3001/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   frontend:
     build:
@@ -19,4 +26,6 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

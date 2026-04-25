@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore, type View } from './store/useAppStore';
 import { CharactersView } from './views/CharactersView';
 import { TrackerView } from './views/TrackerView';
 import { ProfilesView } from './views/ProfilesView';
 import { SettingsView } from './views/SettingsView';
+import { CharacterDashboardPanel } from './views/CharacterDashboardPanel';
 import { api } from './api/client';
+import type { Character } from './types';
 
 const NAV_TABS: { view: View; label: string }[] = [
   { view: 'tracker',    label: 'Tracker' },
@@ -15,6 +17,7 @@ const NAV_TABS: { view: View; label: string }[] = [
 
 export default function App() {
   const { activeView, setActiveView, setActiveProfile, setProfiles, setBnetStatus } = useAppStore();
+  const [dashboardChar, setDashboardChar] = useState<Character | null>(null);
 
   useEffect(() => {
     // Handle OAuth callback redirect: ?bnetAuth=success|error
@@ -59,11 +62,18 @@ export default function App() {
       </header>
 
       <main>
-        {activeView === 'tracker'    && <TrackerView />}
-        {activeView === 'characters' && <CharactersView />}
+        {activeView === 'tracker'    && <TrackerView onCharacterClick={setDashboardChar} />}
+        {activeView === 'characters' && <CharactersView onCharacterClick={setDashboardChar} />}
         {activeView === 'profiles'   && <ProfilesView />}
         {activeView === 'settings'   && <SettingsView />}
       </main>
+
+      {dashboardChar && (
+        <CharacterDashboardPanel
+          character={dashboardChar}
+          onClose={() => setDashboardChar(null)}
+        />
+      )}
     </div>
   );
 }

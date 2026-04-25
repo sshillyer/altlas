@@ -34,11 +34,13 @@ function SortableRow({
   onDelete,
   onToggleTracked,
   onUpdate,
+  onCharacterClick,
 }: {
   char: Character;
   onDelete: (id: string) => void;
   onToggleTracked: (id: string, current: boolean) => void;
   onUpdate: (updated: Character) => void;
+  onCharacterClick: (char: Character) => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -116,10 +118,13 @@ function SortableRow({
         />
 
         <div className="flex-1 min-w-0">
-          <span className={`font-medium ${char.isTracked ? 'text-white' : 'text-gray-500'}`}>
+          <button
+            onClick={() => onCharacterClick(char)}
+            className={`font-medium hover:underline cursor-pointer ${char.isTracked ? 'text-white' : 'text-gray-500'}`}
+          >
             {char.name}
             {char.isMain && <span className="ml-1 text-xs text-yellow-400">★</span>}
-          </span>
+          </button>
           <span className="text-gray-400 text-sm ml-1">— {char.realm}</span>
         </div>
 
@@ -277,7 +282,7 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'name',  label: 'Name (A–Z)' },
 ];
 
-export function CharactersView() {
+export function CharactersView({ onCharacterClick }: { onCharacterClick: (char: Character) => void }) {
   const { bnetConnected } = useAppStore();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -574,6 +579,7 @@ export function CharactersView() {
                   onDelete={handleDelete}
                   onToggleTracked={handleToggleTracked}
                   onUpdate={handleUpdate}
+                  onCharacterClick={onCharacterClick}
                 />
               ))}
             </div>

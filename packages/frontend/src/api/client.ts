@@ -1,5 +1,6 @@
 import type {
   Character,
+  CharacterDashboardResponse,
   CreateCharacterDto,
   TrackerState,
   TaskDefinition,
@@ -54,6 +55,7 @@ export const api = {
     update: (id: string, body: Partial<Character>) => patch<Character>(`/api/characters/${id}`, body),
     delete: (id: string) => del<void>(`/api/characters/${id}`),
     reorder: (order: string[]) => post<{ success: boolean }>('/api/characters/reorder', { order }),
+    dashboard: (id: string) => get<CharacterDashboardResponse>(`/api/characters/${id}/dashboard`),
   },
   tasks: {
     getState: () => get<TrackerState>('/api/tasks/state'),

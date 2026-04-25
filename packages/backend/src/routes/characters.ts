@@ -3,6 +3,7 @@ import { eq, asc, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '../db/client';
 import { characters, characterTasks, taskDefinitions } from '../db/schema';
+import { isBnetReady, fetchDashboard } from '../bnet/characterDashboard';
 
 export default async function characterRoutes(fastify: FastifyInstance) {
   // POST /api/characters/reorder — must come before /:id
@@ -115,6 +116,27 @@ export default async function characterRoutes(fastify: FastifyInstance) {
     const updated = db.select().from(characters).where(eq(characters.id, id)).get();
     if (!updated) return reply.status(404).send({ error: 'Character not found' });
     return updated;
+  });
+
+  // GET /api/characters/:id/dashboard — must come before /:id DELETE
+  fastify.get<{ Params: { id: string } }>('/api/characters/:id/dashboard', async (req, reply) => {
+    const char = db.select().from(characters).where(eq(characters.id, req.params.id)).get();
+    if (!char) return reply.status(404).send({ error: 'Character not found' });
+
+    if (!isBnetReady()) {
+      return { bnetAvailable: false, data: null };
+    }
+
+    try {
+      const data = await fetchDashboard(char.region, char.realm, char.name);
+      return { bnetAvailable: true, data };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('bnet_token_expired')) {
+        return reply.status(401).send({ error: 'bnet_token_expired' });
+      }
+      return { bnetAvailable: true, data: null, error: msg };
+    }
   });
 
   // DELETE /api/characters/:id

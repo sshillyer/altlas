@@ -77,19 +77,24 @@ function ResetStrip({ nextDaily, nextWeekly }: { nextDaily: string; nextWeekly: 
 
 interface CharHeaderCellProps {
   char: Character;
+  onCharacterClick: (char: Character) => void;
 }
 
-const CharHeaderCell = React.memo(function CharHeaderCell({ char }: CharHeaderCellProps) {
+const CharHeaderCell = React.memo(function CharHeaderCell({ char, onCharacterClick }: CharHeaderCellProps) {
   const color = CLASS_COLORS[char.class] ?? '#9ca3af';
-  const shortName = char.name.length > 6 ? char.name.slice(0, 5) + '…' : char.name;
   return (
     <th
-      className="sticky top-0 bg-gray-900 w-12 min-w-12 px-1 py-2 text-center z-10 border-b border-gray-700"
+      style={{ borderTop: `3px solid ${color}` }}
+      className="sticky top-0 bg-gray-900 w-16 min-w-16 px-1 py-2 text-center z-10 border-b border-gray-700"
       title={`${char.name} — ${char.realm} (${char.region.toUpperCase()})`}
     >
-      <div className="text-xs font-semibold leading-tight" style={{ color }}>
-        {shortName}
-      </div>
+      <button
+        onClick={() => onCharacterClick(char)}
+        className="text-xs font-semibold leading-tight overflow-hidden text-ellipsis whitespace-nowrap block w-full hover:underline cursor-pointer"
+        style={{ color }}
+      >
+        {char.name}
+      </button>
       {char.isMain && (
         <div className="text-[9px] leading-tight text-gray-600">main</div>
       )}
@@ -204,15 +209,18 @@ interface TaskCellProps {
   state: CharacterTaskState;
   onToggle: (id: string, current: string | null) => void;
   onOpenMenu: (e: React.MouseEvent, state: CharacterTaskState) => void;
+  accentColor?: string;
 }
 
-const TaskCell = React.memo(function TaskCell({ state, onToggle, onOpenMenu }: TaskCellProps) {
+const TaskCell = React.memo(function TaskCell({ state, onToggle, onOpenMenu, accentColor }: TaskCellProps) {
   const done = state.completedAt != null;
+  const accentStyle = accentColor ? { borderLeft: `2px solid ${accentColor}50` } : undefined;
 
   if (!state.isEnabled) {
     return (
       <td
-        className="w-12 min-w-12 text-center py-1.5 text-gray-700 text-xs border-b border-gray-800 cursor-pointer hover:bg-gray-800/30 hover:text-gray-500 transition-colors"
+        style={accentStyle}
+        className="w-16 min-w-16 text-center py-1.5 text-gray-700 text-xs border-b border-gray-800 cursor-pointer hover:bg-gray-800/30 hover:text-gray-500 transition-colors"
         onContextMenu={(e) => { e.preventDefault(); onOpenMenu(e, state); }}
         title="Task disabled — right-click to enable or add note"
       >
@@ -223,7 +231,8 @@ const TaskCell = React.memo(function TaskCell({ state, onToggle, onOpenMenu }: T
 
   return (
     <td
-      className={`w-12 min-w-12 text-center py-1 border-b border-gray-800 cursor-pointer select-none transition-colors ${
+      style={accentStyle}
+      className={`w-16 min-w-16 text-center py-1 border-b border-gray-800 cursor-pointer select-none transition-colors ${
         done
           ? 'bg-gray-800/50 text-green-400 hover:bg-gray-800'
           : 'text-gray-600 hover:text-gray-200 hover:bg-gray-800/40'
@@ -248,10 +257,23 @@ const TaskCell = React.memo(function TaskCell({ state, onToggle, onOpenMenu }: T
 
 // ─── TrackerView ─────────────────────────────────────────────────────────────
 
-export function TrackerView() {
+interface TrackerViewProps {
+  onCharacterClick: (char: Character) => void;
+}
+
+export function TrackerView({ onCharacterClick }: TrackerViewProps) {
   const { trackerData, isLoading, error, fetchTracker, toggleTask, saveNote, toggleEnabled } = useTrackerStore();
   const { setActiveView } = useAppStore();
   const [cellMenu, setCellMenu] = useState<CellMenuState | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = useCallback((category: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category); else next.add(category);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     fetchTracker();
@@ -302,6 +324,9 @@ export function TrackerView() {
   }
 
   const { characters, taskGroups, nextDailyReset, nextWeeklyReset } = trackerData;
+  const charColorMap = Object.fromEntries(
+    characters.map((c) => [c.id, CLASS_COLORS[c.class] ?? '#9ca3af'])
+  );
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 52px)' }}>
@@ -318,63 +343,72 @@ export function TrackerView() {
                 Task
               </th>
               {characters.map((char) => (
-                <CharHeaderCell key={char.id} char={char} />
+                <CharHeaderCell key={char.id} char={char} onCharacterClick={onCharacterClick} />
               ))}
             </tr>
           </thead>
 
           <tbody>
-            {taskGroups.map((group) => (
-              <React.Fragment key={group.category}>
-                <tr>
-                  <td
-                    colSpan={characters.length + 1}
-                    className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-gray-500 bg-gray-800 border-y border-gray-700"
-                  >
-                    {group.label}
-                  </td>
-                </tr>
-
-                {group.tasks.map((task) => (
-                  <tr key={task.definitionId} className="hover:bg-gray-800/10">
-                    <td className="sticky left-0 z-20 bg-gray-900 w-44 min-w-44 px-3 py-1.5 text-gray-300 text-xs border-b border-r border-gray-800 whitespace-nowrap">
-                      {task.name}
-                      {task.resetType === 'daily' && (
-                        <span className="ml-1.5 text-[9px] text-gray-600 font-medium">D</span>
-                      )}
+            {taskGroups.map((group) => {
+              const collapsed = collapsedGroups.has(group.category);
+              return (
+                <React.Fragment key={group.category}>
+                  <tr>
+                    <td
+                      colSpan={characters.length + 1}
+                      className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-gray-500 bg-gray-800 border-y border-gray-700 cursor-pointer select-none hover:text-gray-300 transition-colors"
+                      onClick={() => toggleGroup(group.category)}
+                    >
+                      <span className="mr-1.5 inline-block w-2">{collapsed ? '▶' : '▼'}</span>
+                      {group.label}
                     </td>
-
-                    {task.scope === 'per_account' ? (
-                      <AccountWideCell
-                        task={task}
-                        characters={characters}
-                        onToggle={toggleTask}
-                        onOpenMenu={handleOpenMenu}
-                      />
-                    ) : (
-                      characters.map((char) => {
-                        const state = task.characterState[char.id];
-                        return state ? (
-                          <TaskCell
-                            key={char.id}
-                            state={state}
-                            onToggle={toggleTask}
-                            onOpenMenu={handleOpenMenu}
-                          />
-                        ) : (
-                          <td
-                            key={char.id}
-                            className="w-12 min-w-12 border-b border-gray-800 text-center text-gray-700 text-xs py-1.5"
-                          >
-                            –
-                          </td>
-                        );
-                      })
-                    )}
                   </tr>
-                ))}
-              </React.Fragment>
-            ))}
+
+                  {!collapsed && group.tasks.map((task) => (
+                    <tr key={task.definitionId} className="hover:bg-gray-800/10">
+                      <td className="sticky left-0 z-20 bg-gray-900 w-44 min-w-44 px-3 py-1.5 text-gray-300 text-xs border-b border-r border-gray-800 whitespace-nowrap">
+                        {task.name}
+                        {task.resetType === 'daily' && (
+                          <span className="ml-1.5 text-[9px] text-gray-600 font-medium">D</span>
+                        )}
+                      </td>
+
+                      {task.scope === 'per_account' ? (
+                        <AccountWideCell
+                          task={task}
+                          characters={characters}
+                          charColorMap={charColorMap}
+                          onToggle={toggleTask}
+                          onOpenMenu={handleOpenMenu}
+                        />
+                      ) : (
+                        characters.map((char) => {
+                          const state = task.characterState[char.id];
+                          const accentColor = charColorMap[char.id];
+                          return state ? (
+                            <TaskCell
+                              key={char.id}
+                              state={state}
+                              onToggle={toggleTask}
+                              onOpenMenu={handleOpenMenu}
+                              accentColor={accentColor}
+                            />
+                          ) : (
+                            <td
+                              key={char.id}
+                              style={{ borderLeft: `2px solid ${accentColor}50` }}
+                              className="w-16 min-w-16 border-b border-gray-800 text-center text-gray-700 text-xs py-1.5"
+                            >
+                              –
+                            </td>
+                          );
+                        })
+                      )}
+                    </tr>
+                  ))}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -404,18 +438,20 @@ export function TrackerView() {
 interface AccountWideCellProps {
   task: { characterState: Record<string, CharacterTaskState> };
   characters: Character[];
+  charColorMap: Record<string, string>;
   onToggle: (id: string, current: string | null) => void;
   onOpenMenu: (e: React.MouseEvent, state: CharacterTaskState) => void;
 }
 
-function AccountWideCell({ task, characters, onToggle, onOpenMenu }: AccountWideCellProps) {
+function AccountWideCell({ task, characters, charColorMap, onToggle, onOpenMenu }: AccountWideCellProps) {
   const firstChar = characters[0];
   const state = firstChar ? task.characterState[firstChar.id] : undefined;
+  const accentColor = firstChar ? charColorMap[firstChar.id] : undefined;
 
   return (
     <>
       {state ? (
-        <TaskCell state={state} onToggle={onToggle} onOpenMenu={onOpenMenu} />
+        <TaskCell state={state} onToggle={onToggle} onOpenMenu={onOpenMenu} accentColor={accentColor} />
       ) : (
         <td className="w-12 min-w-12 border-b border-gray-800" />
       )}

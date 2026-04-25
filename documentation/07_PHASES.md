@@ -163,8 +163,8 @@ Ask me before making decisions that aren't covered by the docs.
 - `docker-compose.yml` updated to serve frontend via nginx (not dev server)
 - `docker-compose.dev.yml` for hot-reload development mode
 - Per-cell notes (click a cell to open a small popover with a text note field)
-- `PATCH /api/tasks/character/:id/toggle-enabled` + UI to disable tasks per character
-- Character edit inline (spec, professions, isMain)
+- `PATCH /api/tasks/character/:id/toggle-enabled` + UI to disable tasks per character (NOTE I might have taken care of this in prior story with a toggle for Tracked)
+- Character edit inline (spec, professions, isMain) -> not sure what this is honestly
 - Settings view: region selector persisted to `app_settings`
 - README.md with setup instructions
 

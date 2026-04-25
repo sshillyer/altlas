@@ -92,16 +92,31 @@ export async function syncAllCharacters(): Promise<SyncResult> {
     const rawClass = bChar.playable_class.name.toLowerCase();
     const wowClass: WowClass = CLASS_NAME_MAP[rawClass] ?? 'warrior';
 
+    const slug = toRealmSlug(realmName);
+    const charPath = `/profile/wow/character/${slug}/${charName.toLowerCase()}`;
+    const qs = `?namespace=${namespace}&locale=en_US`;
+
     let ilvl: number | null = null;
-    try {
-      const slug = toRealmSlug(realmName);
-      const summary = await bnetFetch<BlizzardCharacterSummary>(
-        `/profile/wow/character/${slug}/${charName.toLowerCase()}?namespace=${namespace}&locale=en_US`,
-        region,
-      );
-      ilvl = summary.equipped_item_level ?? summary.average_item_level ?? null;
-    } catch {
-      // non-fatal — proceed without ilvl
+    let spec: string | null = null;
+    let professionA: string | null = null;
+    let professionB: string | null = null;
+
+    const [summaryResult, profResult] = await Promise.allSettled([
+      bnetFetch<BlizzardCharacterSummary>(`${charPath}${qs}`, region),
+      bnetFetch<BlizzardProfessionsResponse>(`${charPath}/professions${qs}`, region),
+    ]);
+
+    if (summaryResult.status === 'fulfilled') {
+      ilvl = summaryResult.value.equipped_item_level ?? summaryResult.value.average_item_level ?? null;
+      if (summaryResult.value.active_spec?.name) {
+        spec = summaryResult.value.active_spec.name.toLowerCase().replace(/\s+/g, '_');
+      }
+    }
+
+    if (profResult.status === 'fulfilled') {
+      const primaries = profResult.value.primaries ?? [];
+      if (primaries[0]?.profession.name) professionA = primaries[0].profession.name;
+      if (primaries[1]?.profession.name) professionB = primaries[1].profession.name;
     }
 
     const existing = db
@@ -118,7 +133,14 @@ export async function syncAllCharacters(): Promise<SyncResult> {
 
     if (existing) {
       db.update(characters)
-        .set({ bnetId, ilvl: ilvl ?? existing.ilvl, updatedAt: now })
+        .set({
+          bnetId,
+          ilvl: ilvl ?? existing.ilvl,
+          spec: spec ?? existing.spec,
+          professionA: professionA ?? existing.professionA,
+          professionB: professionB ?? existing.professionB,
+          updatedAt: now,
+        })
         .where(eq(characters.id, existing.id))
         .run();
       updated++;
@@ -138,11 +160,11 @@ export async function syncAllCharacters(): Promise<SyncResult> {
           realm: realmName,
           region,
           class: wowClass,
-          spec: null,
+          spec,
           level: bChar.level,
           ilvl,
-          professionA: null,
-          professionB: null,
+          professionA,
+          professionB,
           bnetId,
           isMain: false,
           sortOrder,

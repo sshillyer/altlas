@@ -113,6 +113,96 @@ export const CLASS_COLORS: Record<WowClass, string> = {
   warrior:     '#C69B3A',
 };
 
+export interface DashboardEquipmentItem {
+  slot: string;
+  slotName: string;
+  name: string;
+  ilvl: number;
+  quality: string;
+  iconUrl: string | null;
+}
+
+export interface DashboardPvpBracket {
+  rating: number;
+  played: number;
+  won: number;
+  lost: number;
+}
+
+export interface WeeklyMythicRun {
+  dungeon: string;
+  keystoneLevel: number;
+  timedWithin: boolean;
+}
+
+export interface RaidDifficulty {
+  difficulty: string;
+  killed: number;
+  total: number;
+}
+
+export interface RaidInstanceProgress {
+  name: string;
+  difficulties: RaidDifficulty[];
+}
+
+export interface TalentEntry {
+  talentId: number;
+  name: string;
+  description: string;
+  castTime?: string;
+  iconUrl: string | null;
+}
+
+export interface TalentNodeData {
+  nodeId: number;
+  row: number;
+  col: number;
+  maxRank: number;
+  lockedBy: number[];
+  isChoice: boolean;
+  selectedTalentId: number | null;
+  selectedRank: number;
+  talents: TalentEntry[];
+}
+
+export interface TalentSection {
+  type: 'class' | 'spec' | 'hero';
+  name: string;
+  nodes: TalentNodeData[];
+}
+
+export interface TalentBuild {
+  specName: string;
+  heroTreeName: string | null;
+  sections: TalentSection[];
+}
+
+export interface CharacterDashboardData {
+  equippedIlvl: number | null;
+  avgIlvl: number | null;
+  spec: string | null;
+  renderUrl: string | null;
+  avatarUrl: string | null;
+  equipment: DashboardEquipmentItem[];
+  pvp: {
+    honorLevel: number | null;
+    twoVtwo: DashboardPvpBracket | null;
+    threeVthree: DashboardPvpBracket | null;
+    rbg: DashboardPvpBracket | null;
+  };
+  mythicRating: number | null;
+  weeklyMythicRuns: WeeklyMythicRun[];
+  raidProgress: { expansionName: string; instances: RaidInstanceProgress[] } | null;
+  talentBuild: TalentBuild | null;
+}
+
+export interface CharacterDashboardResponse {
+  bnetAvailable: boolean;
+  data: CharacterDashboardData | null;
+  error?: string;
+}
+
 export const WOW_CLASSES: WowClass[] = [
   'deathknight', 'demonhunter', 'druid', 'evoker', 'hunter',
   'mage', 'monk', 'paladin', 'priest', 'rogue',
