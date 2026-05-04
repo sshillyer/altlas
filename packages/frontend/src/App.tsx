@@ -5,6 +5,7 @@ import { TrackerView } from './views/TrackerView';
 import { ProfilesView } from './views/ProfilesView';
 import { SettingsView } from './views/SettingsView';
 import { CharacterDashboardPanel } from './views/CharacterDashboardPanel';
+import { GuidesView } from './views/GuidesView';
 import { api } from './api/client';
 import type { Character } from './types';
 
@@ -12,6 +13,7 @@ const NAV_TABS: { view: View; label: string }[] = [
   { view: 'tracker',    label: 'Tracker' },
   { view: 'characters', label: 'Characters' },
   { view: 'profiles',   label: 'Profiles' },
+  { view: 'guides',     label: 'Class Guides' },
   { view: 'settings',   label: 'Settings' },
 ];
 
@@ -65,6 +67,7 @@ export default function App() {
         {activeView === 'tracker'    && <TrackerView onCharacterClick={setDashboardChar} />}
         {activeView === 'characters' && <CharactersView onCharacterClick={setDashboardChar} />}
         {activeView === 'profiles'   && <ProfilesView />}
+        {activeView === 'guides'     && <GuidesView />}
         {activeView === 'settings'   && <SettingsView />}
       </main>
 

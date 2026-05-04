@@ -540,7 +540,7 @@ interface Props {
 }
 
 export function CharacterDashboardPanel({ character, onClose }: Props) {
-  const { setActiveView } = useAppStore();
+  const { setActiveView, openGuide } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState<CharacterDashboardResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -619,7 +619,13 @@ export function CharacterDashboardPanel({ character, onClose }: Props) {
                 </a>
               </div>
               <div className="text-sm text-gray-400 mt-0.5 leading-snug">
-                {formatSpec(displaySpec)} · {formatClass(character.class)}
+                {formatSpec(displaySpec)} ·{' '}
+                <button
+                  onClick={() => { openGuide(character.class); onClose(); }}
+                  className="hover:text-amber-400 transition-colors"
+                >
+                  {formatClass(character.class)}
+                </button>
                 <span className="mx-1 text-gray-600">•</span>
                 {character.realm} {character.region.toUpperCase()}
                 <span className="mx-1 text-gray-600">•</span>
